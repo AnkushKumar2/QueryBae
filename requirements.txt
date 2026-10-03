@@ -1,0 +1,9 @@
+openai
+python-dotenv
+pandas
+mysql-connector-python
+chromadb
+sqlalchemy
+pymysql
+cryptography
+streamlit

@@ -1,0 +1,2 @@
+- 'Country' of an order means orders.ship_country.
+- freight is stored once per order; don't join order_details when summing it.
