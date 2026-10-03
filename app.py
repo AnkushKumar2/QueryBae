@@ -130,7 +130,7 @@ def is_text_column(series: pd.Series) -> bool:
     return (
         pd.api.types.is_object_dtype(series)
         or pd.api.types.is_string_dtype(series)
-        or pd.api.types.is_categorical_dtype(series)
+        or isinstance(series.dtype, pd.CategoricalDtype)  # CHANGED: old helper is deprecated/removed
     )
 
 
@@ -160,8 +160,8 @@ def find_chart_columns(df: pd.DataFrame):
     return text_column, numeric_column
 
 
-def render_result(result: dict):
-    """Render a stored assistant result."""
+def render_result(result: dict, idx: int = 0):  # CHANGED: added idx
+    """Render a stored assistant result. idx must be unique per message."""
     assumption = result.get("assumption")
     sql = result.get("sql")
     df = result.get("df")
@@ -227,6 +227,7 @@ def render_result(result: dict):
         file_name="querybae_results.csv",
         mime="text/csv",
         use_container_width=False,
+        key=f"download_csv_{idx}",  # CHANGED: unique key fixes the duplicate ID error
     )
 
 
@@ -314,7 +315,7 @@ with st.sidebar:
 # -----------------------------
 # Display conversation history
 # -----------------------------
-for message in st.session_state.messages:
+for i, message in enumerate(st.session_state.messages):  # CHANGED: enumerate for unique index
     role = message["role"]
 
     with st.chat_message(role):
@@ -322,7 +323,7 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
         elif role == "assistant":
-            render_result(message["result"])
+            render_result(message["result"], idx=i)  # CHANGED: pass index
 
 
 # -----------------------------
@@ -375,8 +376,8 @@ if question:
                     "error": f"Something went wrong while processing your question: {exc}",
                 }
 
-        # Render result
-        render_result(result)
+        # Render result. Its index will be the next slot in the message list.
+        render_result(result, idx=len(st.session_state.messages))  
 
     # Save assistant response
     st.session_state.messages.append(
